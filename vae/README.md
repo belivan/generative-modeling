@@ -21,20 +21,20 @@ python train.py --log_dir ae_latent1024 --loss_mode ae --latent_size 1024
 *2.6*. Train the VAE for 20 epochs. Use the latent size from 2.3 that produces the sharpest reconstructions.
 Commands:
 ```
-python train.py --log_dir vae_latent_rep --loss_mode vae --latent_size <>
+python train.py --log_dir vae_latent_rep --loss_mode vae --latent_size 1024 ?????? <<<DONE>>>
 ```
 
 *2.7*. The blurriness of the samples can be reduced by tuning the value of beta. Use the latent size from 2.3 that produces the sharpest reconstructions.
 ```
-python train.py --log_dir vae_latent_beta_.8 --loss_mode vae --latent_size <> --target_beta_val 0.8
-python train.py --log_dir vae_latent_beta_1.2 --loss_mode vae --latent_size <> --target_beta_val 1.2
+python train.py --log_dir vae_latent_beta_.8 --loss_mode vae --latent_size 1024 --target_beta_val 0.8
+python train.py --log_dir vae_latent_beta_1.2 --loss_mode vae --latent_size 1024 --target_beta_val 1.2
 ```
 
 *2.8*. Another way to improve the quality of samples is to use an annealing scheme for beta. Fill in TODO for 2.8. The value of beta should increase linearly from 0 at epoch 0 to target_val at epoch max_epochs.
 
 *2.9*. Train the VAE for 20 epochs with beta annealing using the value of beta that results in the best samples, out of 0.8, 1.0, and 1.2. Use the latent size from 2.3 that produces the sharpest reconstructions.
 ```
-python train.py --log_dir vae_latent_beta_annealing --loss_mode vae --latent_size <> --target_beta_val <> --beta_mode linear
+python train.py --log_dir vae_latent_beta_annealing --loss_mode vae --latent_size 1024 --target_beta_val 0.8 --beta_mode linear
 ```
 
 ## Relevant papers:

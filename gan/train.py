@@ -28,8 +28,12 @@ def get_optimizers_and_schedulers(gen, disc):
     # The learning rate for the generator should be decayed to 0 over
     # 100K iterations.
     ##################################################################
-    scheduler_discriminator = None
-    scheduler_generator = None
+    scheduler_discriminator = torch.optim.lr_scheduler.LambdaLR(
+        optim_discriminator, lambda x: 1 - x / 500_000
+    )
+    scheduler_generator = torch.optim.lr_scheduler.LambdaLR(
+        optim_generator, lambda x: 1 - x / 100_000
+    )
     ##################################################################
     #                          END OF YOUR CODE                      #
     ##################################################################
@@ -59,23 +63,23 @@ class Dataset(VisionDataset):
 
 def train_model(
     gen,
-    disc,
-    num_iterations,
+    disc,  # generator and discriminator models
+    num_iterations,  # number of iterations to train for
     batch_size,
-    lamb=10,
-    prefix=None,
-    gen_loss_fn=None,
-    disc_loss_fn=None,
-    log_period=10000,
-    amp_enabled=True,
+    lamb=10,  # gradient penalty
+    prefix=None,  # prefix for saving generated samples
+    gen_loss_fn=None,  # e.g. torch.nn.BCEWithLogitsLoss()
+    disc_loss_fn=None,  # e.g. torch.nn.BCEWithLogitsLoss()
+    log_period=10000,  # how often to log generated samples and FID
+    amp_enabled=True,  # whether to use automatic mixed precision
 ):
-    torch.backends.cudnn.benchmark = True # speed up training
+    torch.backends.cudnn.benchmark = True  # speed up training
     ds_transforms = build_transforms()
     train_loader = torch.utils.data.DataLoader(
         Dataset(root="../datasets/CUB_200_2011_32", transform=ds_transforms),
         batch_size=batch_size,
         shuffle=True,
-        num_workers=4,
+        num_workers=4,  # number of threads for data loading
         pin_memory=True,
     )
 
@@ -91,12 +95,12 @@ def train_model(
     iters = 0
     fids_list = []
     iters_list = []
-    pbar = tqdm(total = num_iterations)
+    pbar = tqdm(total=num_iterations)
     while iters < num_iterations:
         for train_batch in train_loader:
             with torch.cuda.amp.autocast(enabled=amp_enabled):
                 train_batch = train_batch.cuda()
-                
+
                 ####################### UPDATE DISCRIMINATOR #####################
                 ##################################################################
                 # TODO 1.2: compute generator, discriminator, and interpolated outputs
@@ -105,8 +109,12 @@ def train_model(
                 # 2. Compute discriminator output on the train batch.
                 # 3. Compute the discriminator output on the generated data.
                 ##################################################################
-                discrim_real = None
-                discrim_fake = None
+                device = next(gen.parameters()).device
+                train_batch = train_batch.to(device)
+
+                generated_data = gen(n_samples=train_batch.size(0))
+                discrim_real = disc(train_batch)
+                discrim_fake = disc(generated_data)
                 ##################################################################
                 #                          END OF YOUR CODE                      #
                 ##################################################################
@@ -115,8 +123,10 @@ def train_model(
                 # TODO 1.5 Compute the interpolated batch and run the
                 # discriminator on it.
                 ###################################################################
-                interp = None
-                discrim_interp = None
+                epsilon = torch.rand(train_batch.size(0), 1, 1, 1, device=device)
+                interp = epsilon * train_batch + (1 - epsilon) * generated_data
+                interp.requires_grad_(True)
+                discrim_interp = disc(interp)
                 ##################################################################
                 #                          END OF YOUR CODE                      #
                 ##################################################################
@@ -124,7 +134,7 @@ def train_model(
             discriminator_loss = disc_loss_fn(
                 discrim_real, discrim_fake, discrim_interp, interp, lamb
             )
-            
+
             optim_discriminator.zero_grad(set_to_none=True)
             scaler.scale(discriminator_loss).backward()
             scaler.step(optim_discriminator)
@@ -136,8 +146,8 @@ def train_model(
                     # TODO 1.2: Compute generator and discriminator output on
                     # generated data.
                     ###################################################################
-                    fake_batch = None
-                    discrim_fake = None
+                    fake_batch = gen(train_batch.size(0))
+                    discrim_fake = disc(fake_batch)
                     ##################################################################
                     #                          END OF YOUR CODE                      #
                     ##################################################################
@@ -156,7 +166,8 @@ def train_model(
                         # TODO 1.2: Generate samples using the generator.
                         # Make sure they lie in the range [0, 1]!
                         ##################################################################
-                        generated_samples = None
+                        generated_samples = (gen(n_samples=100) + 1) / 2.0
+                        generated_samples.clamp_(0, 1)
                         ##################################################################
                         #                          END OF YOUR CODE                      #
                         ##################################################################

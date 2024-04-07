@@ -14,18 +14,21 @@ import time
 import os
 from utils import *
 
+'''# For implementing the loss functions in train.py, call model.encoder
+    # and model.decoder directly.'''
+
 def ae_loss(model, x):
     ##################################################################
     # TODO 2.2: Fill in MSE loss between x and its reconstruction.
     ##################################################################
-    loss = None
+    loss = F.mse_loss(model.decoder(model.encoder(x)), x)
     ##################################################################
     #                          END OF YOUR CODE                      #
     ##################################################################
 
     return loss, OrderedDict(recon_loss=loss)
 
-def vae_loss(model, x, beta = 1):
+def vae_loss(model, x, beta=1):
     """
     TODO 2.5 : Fill in recon_loss and kl_loss.
     NOTE: For the kl loss term for the VAE, implement the loss in closed form, you can find the formula here:
@@ -38,27 +41,33 @@ def vae_loss(model, x, beta = 1):
     # closed form, you can find the formula here:
     # (https://stats.stackexchange.com/questions/318748/deriving-the-kl-divergence-loss-for-vaes).
     ##################################################################
-    total_loss = None
-    recon_loss = None
-    kl_loss = None
+    mu, log_std = model.encoder(x)
+    sigma = torch.exp(log_std)
+    epsilon = torch.randn_like(sigma, device=x.device)
+    z = mu + sigma * epsilon
+
+    recon_loss = F.mse_loss(model.decoder(z), x, reduction='sum') / x.size(0)
+    kl_loss = -0.5 * torch.sum(1 + 2 * log_std - mu.pow(2) - torch.exp(2 * log_std), dim=1).mean()
+
+    total_loss = recon_loss + beta * kl_loss
     ##################################################################
     #                          END OF YOUR CODE                      #
     ##################################################################
     return total_loss, OrderedDict(recon_loss=recon_loss, kl_loss=kl_loss)
 
 
-def constant_beta_scheduler(target_val = 1):
+def constant_beta_scheduler(target_val=1):
     def _helper(epoch):
         return target_val
     return _helper
 
-def linear_beta_scheduler(max_epochs=None, target_val = 1):
+def linear_beta_scheduler(max_epochs=None, target_val=1):
     ##################################################################
     # TODO 2.8: Fill in helper. The value returned should increase
     # linearly from 0 at epoch 0 to target_val at epoch max_epochs.
     ##################################################################
     def _helper(epoch):
-        pass
+        return target_val * epoch / max_epochs
     ##################################################################
     #                          END OF YOUR CODE                      #
     ##################################################################

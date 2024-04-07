@@ -1,9 +1,9 @@
 Please follow the instructions for this part of the assignment in THIS order!
 
-*1.1*. Let's start by setting up our networks for training a Generative Adversarial Network (GAN). As we covered in class, GANs have two networks, a generator and a discriminator. The generator takes in a noise sample z, generally sampled from the standard normal distribution, and maps it to an image. The discriminator takes in images and outputs the probability that the image is real or fake. Fill out `networks.py` wherever `#TODO 1.1` is written.
+*1.1*. Let's start by setting up our networks for training a Generative Adversarial Network (GAN). As we covered in class, GANs have two networks, a generator and a discriminator. The generator takes in a noise sample z, generally sampled from the standard normal distribution, and maps it to an image. The discriminator takes in images and outputs the probability that the image is real or fake. Fill out `networks.py` wherever `#TODO 1.1` is written. <<<<DONE>>>>
 
 *1.2*. Now we need to setup the training code for the GAN in `train.py`. Most of the code has been provided but please fill out all of the sections that have `#TODO 1.2`.
-Additionally, implement a function to do latent space interpolation (see utils.py).
+Additionally, implement a function to do latent space interpolation (see utils.py).  <<<<DONE>>>>
 
 *1.3*. In general, we train the generator such that it can fool the discriminator, i.e. samples from the generator will have high probability under the discriminator. Analogously, we train the discriminator such that it can tell apart real and fake images. This means our loss term encourages the discriminator to assign high probability to real images while assigning low probability to fake images. To that end, implement the original GAN losses for the generator and discriminator as described in Algorithm 1 of [1](https://arxiv.org/pdf/1406.2661.pdf) in `q1_3.py`. Then run `python q1_3.py` and update the report with the plots and FID score obtained.
 
