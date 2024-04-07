@@ -89,6 +89,7 @@ class DiffusionModel(nn.Module):
         # noise to predict the additive noise, use the denoising model.
         # Hint: You can use extract function from utils.py. See
         # get_posterior_parameters() for usage examples.
+        # 
         ##################################################################
         # if not isinstance(t, torch.Tensor):
         #     t = torch.tensor([t], device=x_t.device, dtype=torch.long)
